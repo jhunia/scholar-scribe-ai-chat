@@ -7,7 +7,7 @@ import { Key, CheckCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
 // Pre-configured API key
-const DEFAULT_API_KEY = "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";
+const DEFAULT_API_KEY = "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";
 
 const ApiKeyManager = () => {
   const [apiKey, setApiKey] = useState<string>('');
