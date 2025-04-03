@@ -1,10 +1,12 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { academicSubjects, citationStyles, type CitationStyle } from './academicData';
+import { useToast } from '@/components/ui/use-toast';
+import { v4 as uuidv4 } from 'uuid';
 
 export type Message = {
   id: string;
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: Date;
 };
@@ -16,18 +18,41 @@ export type ChatState = {
   conversationId?: string;
 };
 
+interface OpenAIMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
 export function useChat(initialSubject = 'general') {
   const [state, setState] = useState<ChatState>({
     messages: [],
     isLoading: false,
     selectedSubject: initialSubject,
   });
+  const { toast } = useToast();
+
+  const getSystemPrompt = (subject: string) => {
+    const subjectInfo = academicSubjects.find(s => s.id === subject);
+    const subjectName = subjectInfo ? subjectInfo.name : 'General Academics';
+    
+    return `You are Scholar Scribe, an AI academic assistant that helps with ${subjectName} studies and research.
+    
+    Your primary goal is to provide accurate, comprehensive, and academically sound information. Support your explanations with relevant theories, methodologies, and academic references when possible.
+    
+    When addressing questions:
+    - Present information in a scholarly, well-structured format
+    - Maintain academic integrity and rigor
+    - Include brief citations or references to academic sources where relevant
+    - If uncertain, acknowledge limitations rather than presenting speculation as fact
+    
+    Use an academic but approachable tone that's helpful to students and researchers.`;
+  };
 
   const sendMessage = async (content: string) => {
     if (!content.trim()) return;
 
     const userMessage: Message = {
-      id: `user-${Date.now()}`,
+      id: `user-${uuidv4()}`,
       role: 'user',
       content,
       timestamp: new Date(),
@@ -40,16 +65,37 @@ export function useChat(initialSubject = 'general') {
     }));
 
     try {
-      // In a real implementation, this would be an API call to an AI service
-      // For this demo, we'll simulate a response
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const systemPrompt = getSystemPrompt(state.selectedSubject);
+      const messagesForAPI: OpenAIMessage[] = [
+        { role: 'system', content: systemPrompt },
+        ...state.messages.map(m => ({ role: m.role, content: m.content })),
+        { role: userMessage.role, content: userMessage.content }
+      ];
+      
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY || localStorage.getItem('openai_api_key')}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: messagesForAPI,
+          temperature: 0.3,
+          max_tokens: 1000,
+        }),
+      });
 
-      const aiResponse = generateMockResponse(content, state.selectedSubject);
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const responseData = await response.json();
       
       const assistantMessage: Message = {
-        id: `assistant-${Date.now()}`,
+        id: `assistant-${uuidv4()}`,
         role: 'assistant',
-        content: aiResponse,
+        content: responseData.choices[0].message.content,
         timestamp: new Date(),
       };
 
@@ -60,6 +106,11 @@ export function useChat(initialSubject = 'general') {
       }));
     } catch (error) {
       console.error('Error sending message:', error);
+      toast({
+        title: "Error",
+        description: "There was a problem connecting to the AI service. Please check your API key or try again later.",
+        variant: "destructive"
+      });
       setState((prev) => ({ ...prev, isLoading: false }));
     }
   };

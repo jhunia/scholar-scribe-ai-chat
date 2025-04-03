@@ -5,6 +5,7 @@ import ChatHistory from '@/components/ChatHistory';
 import ChatInput from '@/components/ChatInput';
 import SubjectSelector from '@/components/SubjectSelector';
 import CitationHelper from '@/components/CitationHelper';
+import ApiKeyManager from '@/components/ApiKeyManager';
 import { useChat } from '@/lib/chatUtils';
 import { Book, GraduationCap, Trash2 } from 'lucide-react';
 
@@ -33,6 +34,7 @@ const Index = () => {
             </h1>
           </div>
           <div className="flex items-center space-x-2">
+            <ApiKeyManager />
             <CitationHelper />
             <Button
               variant="ghost"
