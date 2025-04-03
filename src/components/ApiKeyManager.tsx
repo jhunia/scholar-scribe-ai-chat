@@ -6,17 +6,27 @@ import { Button } from "@/components/ui/button";
 import { Key, CheckCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
+// Pre-configured API key
+const DEFAULT_API_KEY = "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";
+
 const ApiKeyManager = () => {
   const [apiKey, setApiKey] = useState<string>('');
-  const [hasStoredKey, setHasStoredKey] = useState<boolean>(false);
+  const [hasStoredKey, setHasStoredKey] = useState<boolean>(true); // Default to true since we have a default key
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const { toast } = useToast();
 
   useEffect(() => {
     // Check if API key is stored in localStorage
     const storedKey = localStorage.getItem('openai_api_key');
-    setHasStoredKey(!!storedKey);
-    if (storedKey) {
+    
+    // If no key is stored, set the default one
+    if (!storedKey) {
+      localStorage.setItem('openai_api_key', DEFAULT_API_KEY);
+      setHasStoredKey(true);
+      const maskedKey = `...${DEFAULT_API_KEY.slice(-4)}`;
+      setApiKey(maskedKey);
+    } else {
+      setHasStoredKey(true);
       // Mask the key except for the last 4 characters
       const maskedKey = `...${storedKey.slice(-4)}`;
       setApiKey(maskedKey);
@@ -46,13 +56,15 @@ const ApiKeyManager = () => {
   };
 
   const handleRemoveKey = () => {
-    localStorage.removeItem('openai_api_key');
-    setApiKey('');
-    setHasStoredKey(false);
+    // When removing custom key, set back to default instead of removing completely
+    localStorage.setItem('openai_api_key', DEFAULT_API_KEY);
+    const maskedKey = `...${DEFAULT_API_KEY.slice(-4)}`;
+    setApiKey(maskedKey);
+    setHasStoredKey(true);
     
     toast({
-      title: "Removed",
-      description: "API key has been removed",
+      title: "Reset to Default",
+      description: "Using the default API key now",
       variant: "default"
     });
     
@@ -65,26 +77,17 @@ const ApiKeyManager = () => {
         <Button 
           variant="outline"
           size="sm"
-          className={`flex items-center gap-2 ${hasStoredKey ? 'text-green-600 border-green-200' : 'text-amber-600 border-amber-200'}`}
+          className="flex items-center gap-2 text-green-600 border-green-200"
         >
-          {hasStoredKey ? (
-            <>
-              <CheckCircle className="h-4 w-4" />
-              <span>API Key Set</span>
-            </>
-          ) : (
-            <>
-              <Key className="h-4 w-4" />
-              <span>Set API Key</span>
-            </>
-          )}
+          <CheckCircle className="h-4 w-4" />
+          <span>API Key Set</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>OpenAI API Key</DialogTitle>
           <DialogDescription>
-            Enter your OpenAI API key to use the AI features. Your key is stored only in your browser.
+            A default API key is provided, but you can use your own if needed.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4 py-4">
@@ -95,17 +98,15 @@ const ApiKeyManager = () => {
             type="password"
           />
           <p className="text-xs text-gray-500">
-            Your API key is stored locally in your browser and never sent to our servers.
-            Get an API key from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-academic-navy underline">OpenAI</a>.
+            A default API key is pre-configured, but you can use your own if needed.
+            Keys are stored locally in your browser and never sent to our servers.
           </p>
         </div>
         <DialogFooter className="flex flex-row justify-between sm:justify-between">
-          {hasStoredKey && (
-            <Button variant="outline" onClick={handleRemoveKey} className="text-red-600">
-              Remove Key
-            </Button>
-          )}
-          <Button onClick={handleSaveKey}>Save Key</Button>
+          <Button variant="outline" onClick={handleRemoveKey} className="text-amber-600">
+            Reset to Default
+          </Button>
+          <Button onClick={handleSaveKey}>Save Custom Key</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

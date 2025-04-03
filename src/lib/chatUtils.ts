@@ -4,6 +4,9 @@ import { academicSubjects, citationStyles, type CitationStyle } from './academic
 import { useToast } from '@/components/ui/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 
+// Default API key
+const DEFAULT_API_KEY = "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";
+
 export type Message = {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -30,6 +33,13 @@ export function useChat(initialSubject = 'general') {
     selectedSubject: initialSubject,
   });
   const { toast } = useToast();
+
+  // Set the default API key if none exists
+  useEffect(() => {
+    if (!localStorage.getItem('openai_api_key')) {
+      localStorage.setItem('openai_api_key', DEFAULT_API_KEY);
+    }
+  }, []);
 
   const getSystemPrompt = (subject: string) => {
     const subjectInfo = academicSubjects.find(s => s.id === subject);
@@ -72,11 +82,14 @@ export function useChat(initialSubject = 'general') {
         { role: userMessage.role, content: userMessage.content }
       ];
       
+      // Get API key, prioritize stored key, fall back to default
+      const apiKey = localStorage.getItem('openai_api_key') || DEFAULT_API_KEY;
+      
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY || localStorage.getItem('openai_api_key')}`
+          'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
           model: 'gpt-4o-mini',
