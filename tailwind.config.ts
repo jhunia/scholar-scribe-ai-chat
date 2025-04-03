@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,13 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				academic: {
+					navy: '#0F2E4D',
+					cream: '#F7F2E9',
+					gold: '#D9A566',
+					maroon: '#76323F',
+					lightblue: '#E2EAF2'
 				}
 			},
 			borderRadius: {
@@ -84,11 +92,25 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'typing': {
+					from: { width: '0' },
+					to: { width: '100%' }
+				},
+				'blink': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'typing': 'typing 2s steps(40, end)',
+				'cursor-blink': 'blink 1s step-end infinite'
+			},
+			fontFamily: {
+				serif: ['Playfair Display', 'serif'],
+				sans: ['Source Sans Pro', 'sans-serif']
 			}
 		}
 	},
